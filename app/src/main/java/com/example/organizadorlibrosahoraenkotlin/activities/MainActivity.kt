@@ -2,35 +2,26 @@ package com.example.organizadorlibrosahoraenkotlin.activities
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
-import android.widget.ImageButton
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import androidx.room.Room
+import com.example.organizadorlibrosahoraenkotlin.R
 import com.example.organizadorlibrosahoraenkotlin.adapters.BookAdapter
 import com.example.organizadorlibrosahoraenkotlin.data.BookDatabase
-import com.example.organizadorlibrosahoraenkotlin.models.Book
+import com.example.organizadorlibrosahoraenkotlin.databinding.ActivityMainBinding
 import kotlinx.coroutines.launch
-import com.example.organizadorlibrosahoraenkotlin.R
-
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var bookAdapter: BookAdapter
+    private lateinit var binding: ActivityMainBinding
     private lateinit var db: BookDatabase
+    private lateinit var adapter: BookAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-
-        val tvWelcome: TextView = findViewById(R.id.tvWelcome)
-        val recycler: RecyclerView = findViewById(R.id.recyclerBooks)
-        val btnAdd: Button = findViewById(R.id.btnAddBook)
-        val btnSearch: Button = findViewById(R.id.btnSearchBook)
-        val btnProfile: ImageButton = findViewById(R.id.btnProfile)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         db = Room.databaseBuilder(
             applicationContext,
@@ -38,36 +29,36 @@ class MainActivity : AppCompatActivity() {
             "books-db"
         ).build()
 
-        val books = mutableListOf<Book>()
-        bookAdapter = BookAdapter(books) { book ->
-            lifecycleScope.launch {
-                db.bookDao().delete(book)
-                books.remove(book)
-                bookAdapter.notifyDataSetChanged()
+        adapter = BookAdapter(listOf())
+        binding.recyclerViewBooks.layoutManager = LinearLayoutManager(this)
+        binding.recyclerViewBooks.adapter = adapter
+
+        binding.fabAdd.setOnClickListener {
+            val intent = Intent(this, AddBookActivity::class.java)
+            startActivity(intent)
+        }
+
+        binding.fabSearch.setOnClickListener {
+            val intent = Intent(this, SearchBookActivity::class.java)
+            startActivity(intent)
+        }
+
+        // Cargar libros al iniciar
+        loadBooks()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // 🔁 Actualizar la lista automáticamente al volver a esta Activity
+        loadBooks()
+    }
+
+    private fun loadBooks() {
+        lifecycleScope.launch {
+            val books = db.bookDao().getAll()
+            runOnUiThread {
+                adapter.updateBooks(books)
             }
         }
-
-        recycler.layoutManager = LinearLayoutManager(this)
-        recycler.adapter = bookAdapter
-
-        lifecycleScope.launch {
-            val savedBooks = db.bookDao().getAll()
-            books.addAll(savedBooks)
-            bookAdapter.notifyDataSetChanged()
-        }
-
-        btnAdd.setOnClickListener {
-            startActivity(Intent(this, AddBookActivity::class.java))
-        }
-
-        btnSearch.setOnClickListener {
-            startActivity(Intent(this, SearchBookActivity::class.java))
-        }
-
-        btnProfile.setOnClickListener {
-            startActivity(Intent(this, ProfileActivity::class.java))
-        }
-
-        tvWelcome.text = "Bienvenido, ${SharedPrefManager.getUsername(this)}"
     }
 }
