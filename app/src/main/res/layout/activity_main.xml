@@ -1,66 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:padding="16dp"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:padding="16dp"
     android:background="@android:color/white">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:orientation="horizontal">
-
-        <TextView
-            android:id="@+id/tvWelcome"
-            android:text="Bienvenido, Usuario"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
-        <ImageButton
-            android:id="@+id/btnProfile"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="@null"
-            android:contentDescription="Perfil"
-            android:src="@android:drawable/ic_menu_myplaces" />
-    </LinearLayout>
+    <!-- Encabezado -->
+    <ImageButton
+        android:id="@+id/btnProfile"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="4dp"
+        android:background="@null"
+        android:contentDescription="Perfil"
+        android:src="@android:drawable/ic_menu_myplaces" />
 
     <TextView
+        android:id="@+id/tvWelcome"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:text="Bienvenido, Usuario"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginTop="4dp" />
+
+    <TextView
+        android:id="@+id/tvMyBooks"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tvWelcome"
+        android:layout_marginTop="20dp"
         android:text="Mis Libros"
         android:textSize="18sp"
         android:textStyle="bold"
-        android:layout_marginTop="12dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_centerHorizontal="true" />
 
+    <!-- Lista de libros -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerBooks"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_below="@id/tvMyBooks"
+        android:layout_above="@+id/layoutButtons"
         android:layout_marginTop="8dp" />
 
+    <!-- Botones inferiores -->
     <LinearLayout
+        android:id="@+id/layoutButtons"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:gravity="center"
         android:orientation="horizontal"
-        android:gravity="center">
+        android:layout_marginTop="8dp">
 
         <Button
             android:id="@+id/btnAddBook"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="Agregar Libro" />
+
+        <Space
+            android:layout_width="12dp"
+            android:layout_height="match_parent" />
 
         <Button
             android:id="@+id/btnSearchBook"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Buscar Libro"
-            android:layout_marginStart="12dp" />
+            android:layout_weight="1"
+            android:text="Buscar Libro" />
     </LinearLayout>
-</LinearLayout>
+
+</RelativeLayout>
