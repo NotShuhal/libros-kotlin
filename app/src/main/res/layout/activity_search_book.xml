@@ -6,6 +6,17 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!-- Botón de regreso -->
+    <ImageButton
+        android:id="@+id/btnBack"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="@android:color/transparent"
+        android:src="@android:drawable/ic_media_previous"
+        android:contentDescription="Volver"
+        android:layout_gravity="start"
+        android:padding="4dp"/>
+
     <EditText
         android:id="@+id/etSearch"
         android:layout_width="match_parent"
@@ -28,6 +39,18 @@
         android:layout_gravity="center"
         android:layout_marginTop="8dp"
         android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/tvNoResults"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="No se encontraron resultados."
+        android:gravity="center"
+        android:textSize="16sp"
+        android:textColor="@android:color/darker_gray"
+        android:visibility="gone"
+        android:layout_marginTop="12dp" />
+
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerResults"

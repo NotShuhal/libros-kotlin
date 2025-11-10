@@ -29,7 +29,23 @@ class MainActivity : AppCompatActivity() {
             "books-db"
         ).build()
 
-        adapter = BookAdapter(listOf())
+        adapter = BookAdapter(listOf()) { bookToDelete ->
+            val builder = androidx.appcompat.app.AlertDialog.Builder(this)
+            builder.setTitle("Eliminar libro")
+            builder.setMessage("¿Seguro que deseas eliminar \"${bookToDelete.title}\"?")
+            builder.setPositiveButton("Sí") { _, _ ->
+                lifecycleScope.launch {
+                    db.bookDao().delete(bookToDelete)
+                    val updatedBooks = db.bookDao().getAll()
+                    runOnUiThread {
+                        adapter.updateBooks(updatedBooks)
+                    }
+                }
+            }
+            builder.setNegativeButton("Cancelar", null)
+            builder.show()
+        }
+
         binding.recyclerViewBooks.layoutManager = LinearLayoutManager(this)
         binding.recyclerViewBooks.adapter = adapter
 
@@ -49,7 +65,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // 🔁 Actualizar la lista automáticamente al volver a esta Activity
+        // Actualizar la lista automáticamente al volver a esta Activity
         loadBooks()
     }
 

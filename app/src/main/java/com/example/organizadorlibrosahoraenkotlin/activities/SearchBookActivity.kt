@@ -21,6 +21,7 @@ import java.net.URL
 
 class SearchBookActivity : AppCompatActivity() {
 
+    private lateinit var tvNoResults: TextView
     private lateinit var etSearch: EditText
     private lateinit var btnSearch: Button
     private lateinit var recyclerResults: RecyclerView
@@ -38,6 +39,7 @@ class SearchBookActivity : AppCompatActivity() {
         btnSearch = findViewById(R.id.btnSearch)
         recyclerResults = findViewById(R.id.recyclerResults)
         progressBar = findViewById(R.id.progressBar)
+        tvNoResults = findViewById(R.id.tvNoResults)
 
         recyclerResults.layoutManager = LinearLayoutManager(this)
         adapter = BookSearchAdapter(books) { result ->
@@ -59,6 +61,12 @@ class SearchBookActivity : AppCompatActivity() {
                 searchBooks(query)
             }
         }
+
+        val btnBack: ImageButton = findViewById(R.id.btnBack)
+        btnBack.setOnClickListener {
+            finish() // vuelve a MainActivity
+        }
+
     }
 
     private fun searchBooks(query: String) {
@@ -99,7 +107,10 @@ class SearchBookActivity : AppCompatActivity() {
 
             books.addAll(results)
             adapter.notifyDataSetChanged()
+
+            tvNoResults.visibility = if (books.isEmpty()) View.VISIBLE else View.GONE
             progressBar.visibility = View.GONE
+
         }
     }
 
@@ -152,9 +163,13 @@ class BookSearchAdapter(
         holder.tvAuthor.text = "Autor: ${book.author}"
         holder.tvPublisher.text = "Editorial: ${book.publisher}"
 
-        if (book.imageUrl != null) {
+        val imageUrl = book.imageUrl?.replace("http://", "https://")
+        if (!imageUrl.isNullOrEmpty()) {
             Glide.with(holder.itemView.context)
-                .load(book.imageUrl)
+                .load(imageUrl)
+                .placeholder(android.R.drawable.ic_menu_gallery)
+                .error(android.R.drawable.ic_menu_report_image)
+                .centerCrop()
                 .into(holder.ivCover)
         } else {
             holder.ivCover.setImageResource(android.R.drawable.ic_menu_report_image)
@@ -164,6 +179,7 @@ class BookSearchAdapter(
             onAddClicked(book)
         }
     }
+
 
     override fun getItemCount(): Int = books.size
 }
