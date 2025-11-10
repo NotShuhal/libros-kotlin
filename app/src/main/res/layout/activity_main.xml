@@ -14,17 +14,18 @@
         android:layout_marginBottom="12dp">
 
         <!-- Imagen de perfil -->
-        <ImageButton
+        <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/btnProfile"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_person"
-            android:contentDescription="Perfil"
-            android:padding="8dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_alignParentEnd="true"
             android:layout_marginEnd="8dp"
-            app:tint="@color/black" />
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:scaleType="centerCrop"
+            android:contentDescription="Perfil"
+            app:shapeAppearanceOverlay="@style/CircleImageView"
+            app:srcCompat="@drawable/ic_person" />
+
 
 
         <!-- Texto centrado -->

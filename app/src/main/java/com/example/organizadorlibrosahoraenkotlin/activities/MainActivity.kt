@@ -66,6 +66,25 @@ class MainActivity : AppCompatActivity() {
 
         // Cargar libros al iniciar
         loadBooks()
+
+        // Cargar imagen de perfil si existe
+        val prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+        val imageUri = prefs.getString("profile_image", null)
+        if (imageUri != null) {
+            try {
+                val uri = Uri.parse(imageUri)
+                contentResolver.openInputStream(uri)?.use { inputStream ->
+                    val bitmap = BitmapFactory.decodeStream(inputStream)
+                    binding.btnProfile.setImageBitmap(bitmap)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                binding.btnProfile.setImageResource(R.drawable.ic_person)
+            }
+        } else {
+            binding.btnProfile.setImageResource(R.drawable.ic_person)
+        }
+
     }
 
     override fun onResume() {

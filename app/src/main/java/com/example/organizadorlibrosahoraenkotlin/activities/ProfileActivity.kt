@@ -15,7 +15,6 @@ import com.example.organizadorlibrosahoraenkotlin.R
 import com.example.organizadorlibrosahoraenkotlin.SharedPrefManager
 import com.example.organizadorlibrosahoraenkotlin.data.BookDatabase
 import kotlinx.coroutines.launch
-import java.io.InputStream
 
 class ProfileActivity : AppCompatActivity() {
 
@@ -38,6 +37,8 @@ class ProfileActivity : AppCompatActivity() {
         btnSave = findViewById(R.id.btnSave)
         btnLogout = findViewById(R.id.btnLogout)
 
+        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
         // Inicializar base de datos
         db = Room.databaseBuilder(
             applicationContext,
@@ -46,14 +47,24 @@ class ProfileActivity : AppCompatActivity() {
         ).build()
 
         // Cargar datos guardados
-        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        etName.setText(prefs.getString("user_name", "Usuario"))
         val imageUri = prefs.getString("profile_image", null)
+        val userName = prefs.getString("user_name", "")
+        etName.setText(userName)
+
         if (imageUri != null) {
-            val uri = Uri.parse(imageUri)
-            val inputStream: InputStream? = contentResolver.openInputStream(uri)
-            val bitmap = BitmapFactory.decodeStream(inputStream)
-            ivProfile.setImageBitmap(bitmap)
+            try {
+                val uri = Uri.parse(imageUri)
+                contentResolver.openInputStream(uri)?.use { inputStream ->
+                    val bitmap = BitmapFactory.decodeStream(inputStream)
+                    ivProfile.setImageBitmap(bitmap)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                prefs.edit().remove("profile_image").apply()
+                ivProfile.setImageResource(R.drawable.ic_person)
+            }
+        } else {
+            ivProfile.setImageResource(R.drawable.ic_person)
         }
 
         // Cambiar imagen
@@ -75,17 +86,14 @@ class ProfileActivity : AppCompatActivity() {
         // Cerrar sesión
         btnLogout.setOnClickListener {
             lifecycleScope.launch {
-                // 🧹 Eliminar todos los libros con una sola consulta
                 db.bookDao().deleteAll()
 
-                // Limpiar sesión y preferencias
                 SharedPrefManager.clearSession(this@ProfileActivity)
                 prefs.edit().clear().apply()
 
                 runOnUiThread {
                     Toast.makeText(this@ProfileActivity, "Sesión cerrada", Toast.LENGTH_SHORT).show()
 
-                    // Redirigir al LoginActivity y limpiar el back stack
                     val intent = Intent(this@ProfileActivity, LoginActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                     startActivity(intent)
