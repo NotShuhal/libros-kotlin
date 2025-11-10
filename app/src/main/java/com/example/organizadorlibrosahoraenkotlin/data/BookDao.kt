@@ -13,4 +13,8 @@ interface BookDao {
 
     @Delete
     suspend fun delete(book: Book)
+
+    // 🧹 Nueva función para eliminar todos los libros de una vez
+    @Query("DELETE FROM books")
+    suspend fun deleteAll()
 }
