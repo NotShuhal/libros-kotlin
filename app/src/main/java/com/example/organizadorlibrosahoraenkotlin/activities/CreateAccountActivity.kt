@@ -57,22 +57,34 @@ class CreateAccountActivity : AppCompatActivity() {
         val confirm = etConfirmPassword.text.toString()
         val country = spinnerCountry.selectedItem.toString()
 
-
         if (email.isEmpty()) { etEmail.error = "Ingresa un correo"; etEmail.requestFocus(); return }
         if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) { etEmail.error = "Correo inválido"; etEmail.requestFocus(); return }
         if (username.isEmpty()) { etUsername.error = "Ingresa un nombre de usuario"; etUsername.requestFocus(); return }
         if (password.length < 6) { etPassword.error = "La contraseña debe tener al menos 6 caracteres"; etPassword.requestFocus(); return }
         if (password != confirm) { etConfirmPassword.error = "Las contraseñas no coinciden"; etConfirmPassword.requestFocus(); return }
 
+        // Crear el usuario inicial sin imagen (solo datos básicos)
+        val newUser = User(
+            email = email,
+            username = username,
+            country = country,
+            description = "",
+            profileImageUri = null
+        )
 
-// Guardar usuario (ejemplo simple)
-        val user = User(email = email, username = username, country = country)
-        SharedPrefManager.saveUser(this, user)
+        SharedPrefManager.saveUser(this, newUser)
         SharedPrefManager.setLoggedIn(this, true)
 
-
         Toast.makeText(this, "Cuenta creada. Bienvenido, $username", Toast.LENGTH_SHORT).show()
-        startActivity(Intent(this, MainActivity::class.java))
+
+        // Ir a MainActivity con el nombre visible en el saludo
+        val intent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        startActivity(intent)
         finish()
     }
+
+
+
 }

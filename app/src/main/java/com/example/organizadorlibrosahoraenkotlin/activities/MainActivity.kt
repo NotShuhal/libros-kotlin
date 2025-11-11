@@ -1,22 +1,28 @@
 package com.example.organizadorlibrosahoraenkotlin.activities
 
+import android.app.Activity
 import android.content.Intent
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.room.Room
 import com.example.organizadorlibrosahoraenkotlin.R
+import com.example.organizadorlibrosahoraenkotlin.SharedPrefManager
 import com.example.organizadorlibrosahoraenkotlin.adapters.BookAdapter
 import com.example.organizadorlibrosahoraenkotlin.data.BookDatabase
 import com.example.organizadorlibrosahoraenkotlin.databinding.ActivityMainBinding
 import kotlinx.coroutines.launch
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var db: BookDatabase
     private lateinit var adapter: BookAdapter
+    private val PROFILE_REQUEST_CODE = 1001
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,9 +43,7 @@ class MainActivity : AppCompatActivity() {
                 lifecycleScope.launch {
                     db.bookDao().delete(bookToDelete)
                     val updatedBooks = db.bookDao().getAll()
-                    runOnUiThread {
-                        adapter.updateBooks(updatedBooks)
-                    }
+                    runOnUiThread { adapter.updateBooks(updatedBooks) }
                 }
             }
             builder.setNegativeButton("Cancelar", null)
@@ -50,55 +54,57 @@ class MainActivity : AppCompatActivity() {
         binding.recyclerViewBooks.adapter = adapter
 
         binding.fabAdd.setOnClickListener {
-            val intent = Intent(this, AddBookActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, AddBookActivity::class.java))
         }
 
         binding.fabSearch.setOnClickListener {
-            val intent = Intent(this, SearchBookActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, SearchBookActivity::class.java))
         }
 
         binding.btnProfile.setOnClickListener {
             val intent = Intent(this, ProfileActivity::class.java)
-            startActivity(intent)
+            startActivityForResult(intent, PROFILE_REQUEST_CODE)
         }
 
-        // Cargar libros al iniciar
         loadBooks()
-
-        // Cargar imagen de perfil si existe
-        val prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
-        val imageUri = prefs.getString("profile_image", null)
-        if (imageUri != null) {
-            try {
-                val uri = Uri.parse(imageUri)
-                contentResolver.openInputStream(uri)?.use { inputStream ->
-                    val bitmap = BitmapFactory.decodeStream(inputStream)
-                    binding.btnProfile.setImageBitmap(bitmap)
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                binding.btnProfile.setImageResource(R.drawable.ic_person)
-            }
-        } else {
-            binding.btnProfile.setImageResource(R.drawable.ic_person)
-        }
-
+        loadUserInfo()
     }
 
     override fun onResume() {
         super.onResume()
-        // Actualizar la lista automáticamente al volver a esta Activity
         loadBooks()
+        loadUserInfo()
     }
 
     private fun loadBooks() {
         lifecycleScope.launch {
             val books = db.bookDao().getAll()
-            runOnUiThread {
-                adapter.updateBooks(books)
+            runOnUiThread { adapter.updateBooks(books) }
+        }
+    }
+
+    private fun loadUserInfo() {
+        val user = SharedPrefManager.getUser(this)
+        binding.tvWelcome.text = if (!user?.username.isNullOrEmpty()) {
+            "Bienvenido, ${user?.username}"
+        } else "Bienvenido, Usuario"
+
+        val imagePath = user?.profileImageUri
+        if (!imagePath.isNullOrEmpty()) {
+            val file = File(imagePath)
+            if (file.exists()) {
+                val bitmap = BitmapFactory.decodeFile(file.absolutePath)
+                binding.btnProfile.setImageBitmap(bitmap)
+                return
             }
+        }
+        binding.btnProfile.setImageResource(R.drawable.ic_person)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == PROFILE_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+            loadUserInfo()
         }
     }
 }

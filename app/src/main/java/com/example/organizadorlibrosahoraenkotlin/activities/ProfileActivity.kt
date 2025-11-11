@@ -1,7 +1,6 @@
 package com.example.organizadorlibrosahoraenkotlin.activities
 
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -13,8 +12,12 @@ import androidx.lifecycle.lifecycleScope
 import androidx.room.Room
 import com.example.organizadorlibrosahoraenkotlin.R
 import com.example.organizadorlibrosahoraenkotlin.SharedPrefManager
+import com.example.organizadorlibrosahoraenkotlin.User
 import com.example.organizadorlibrosahoraenkotlin.data.BookDatabase
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
 
 class ProfileActivity : AppCompatActivity() {
 
@@ -22,11 +25,10 @@ class ProfileActivity : AppCompatActivity() {
     private lateinit var etName: EditText
     private lateinit var btnSave: Button
     private lateinit var btnLogout: Button
-
-    private val PREFS_NAME = "user_prefs"
-    private val PICK_IMAGE_REQUEST = 1
-
     private lateinit var db: BookDatabase
+
+    private val PICK_IMAGE_REQUEST = 1
+    private var savedImagePath: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,63 +39,55 @@ class ProfileActivity : AppCompatActivity() {
         btnSave = findViewById(R.id.btnSave)
         btnLogout = findViewById(R.id.btnLogout)
 
-        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-
-        // Inicializar base de datos
         db = Room.databaseBuilder(
             applicationContext,
             BookDatabase::class.java,
             "books-db"
         ).build()
 
-        // Cargar datos guardados
-        val imageUri = prefs.getString("profile_image", null)
-        val userName = prefs.getString("user_name", "")
-        etName.setText(userName)
+        val user = SharedPrefManager.getUser(this)
+        etName.setText(user?.username ?: "Usuario")
 
-        if (imageUri != null) {
-            try {
-                val uri = Uri.parse(imageUri)
-                contentResolver.openInputStream(uri)?.use { inputStream ->
-                    val bitmap = BitmapFactory.decodeStream(inputStream)
-                    ivProfile.setImageBitmap(bitmap)
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                prefs.edit().remove("profile_image").apply()
-                ivProfile.setImageResource(R.drawable.ic_person)
+        // Mostrar imagen si hay una guardada
+        user?.profileImageUri?.let {
+            val file = File(it)
+            if (file.exists()) {
+                ivProfile.setImageBitmap(BitmapFactory.decodeFile(file.absolutePath))
+                savedImagePath = it
             }
-        } else {
-            ivProfile.setImageResource(R.drawable.ic_person)
         }
 
-        // Cambiar imagen
         ivProfile.setOnClickListener {
             val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
             startActivityForResult(intent, PICK_IMAGE_REQUEST)
         }
 
-        // Guardar nombre e imagen
         btnSave.setOnClickListener {
             val name = etName.text.toString().trim()
-            prefs.edit().apply {
-                putString("user_name", name)
-                apply()
+            if (name.isEmpty()) {
+                Toast.makeText(this, "Ingresa un nombre válido", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
             }
+
+            val updatedUser = user?.copy(
+                username = name,
+                profileImageUri = savedImagePath
+            ) ?: User(email = "", username = name, country = "", profileImageUri = savedImagePath)
+
+            SharedPrefManager.saveUser(this, updatedUser)
             Toast.makeText(this, "Perfil actualizado", Toast.LENGTH_SHORT).show()
+
+            val resultIntent = Intent()
+            setResult(Activity.RESULT_OK, resultIntent)
+            finish()
         }
 
-        // Cerrar sesión
         btnLogout.setOnClickListener {
             lifecycleScope.launch {
                 db.bookDao().deleteAll()
-
                 SharedPrefManager.clearSession(this@ProfileActivity)
-                prefs.edit().clear().apply()
-
                 runOnUiThread {
                     Toast.makeText(this@ProfileActivity, "Sesión cerrada", Toast.LENGTH_SHORT).show()
-
                     val intent = Intent(this@ProfileActivity, LoginActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                     startActivity(intent)
@@ -102,23 +96,35 @@ class ProfileActivity : AppCompatActivity() {
             }
         }
 
-        val btnBack: ImageButton = findViewById(R.id.btnBack)
-        btnBack.setOnClickListener { finish() }
+        findViewById<ImageButton>(R.id.btnBack).setOnClickListener { finish() }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-
         if (requestCode == PICK_IMAGE_REQUEST && resultCode == Activity.RESULT_OK) {
-            val imageUri = data?.data
-            if (imageUri != null) {
-                ivProfile.setImageURI(imageUri)
-                val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                prefs.edit().apply {
-                    putString("profile_image", imageUri.toString())
-                    apply()
-                }
+            val imageUri = data?.data ?: return
+            val copiedPath = copyImageToInternalStorage(imageUri)
+            if (copiedPath != null) {
+                savedImagePath = copiedPath
+                ivProfile.setImageBitmap(BitmapFactory.decodeFile(copiedPath))
+            } else {
+                Toast.makeText(this, "Error al guardar imagen", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+    private fun copyImageToInternalStorage(uri: Uri): String? {
+        return try {
+            val inputStream: InputStream? = contentResolver.openInputStream(uri)
+            val file = File(filesDir, "profile_${System.currentTimeMillis()}.jpg")
+            FileOutputStream(file).use { output ->
+                inputStream?.copyTo(output)
+            }
+            inputStream?.close()
+            file.absolutePath
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
     }
 }
