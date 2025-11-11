@@ -1,24 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:padding="8dp"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="#EEEEEE"
-    android:layout_marginBottom="6dp">
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:background="@android:color/white"
+    android:layout_marginBottom="8dp"
+    android:elevation="2dp">
 
     <TextView
-        android:id="@+id/tvTitle"
-        android:text="Título"
-        android:textSize="16sp"
+        android:id="@+id/tvBookTitle"
+        android:text="Título del libro"
         android:textStyle="bold"
-        android:layout_width="wrap_content"
+        android:textSize="18sp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
     <TextView
-        android:id="@+id/tvAuthor"
+        android:id="@+id/tvBookAuthor"
         android:text="Autor"
         android:textSize="14sp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp" />
+
+    <TextView
+        android:id="@+id/tvBookPublisher"
+        android:text="Editorial"
+        android:textSize="14sp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp" />
+
+    <TextView
+        android:id="@+id/tvBookNote"
+        android:text="Nota adicional"
+        android:textSize="13sp"
+        android:textColor="#555555"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp" />
+
+    <ImageButton
+        android:id="@+id/btnDeleteBook"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:src="@android:drawable/ic_menu_delete"
+        android:background="@null"
+        android:contentDescription="Eliminar libro"
+        android:layout_gravity="end"
+        android:layout_marginTop="4dp" />
 </LinearLayout>

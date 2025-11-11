@@ -1,66 +1,89 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:padding="16dp"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/white">
 
-    <LinearLayout
+    <!-- ENCABEZADO -->
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:orientation="horizontal">
+        android:layout_marginBottom="12dp">
 
-        <TextView
-            android:id="@+id/tvWelcome"
-            android:text="Bienvenido, Usuario"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
-        <ImageButton
+        <!-- Imagen de perfil -->
+        <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/btnProfile"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:background="@null"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:scaleType="centerCrop"
             android:contentDescription="Perfil"
-            android:src="@android:drawable/ic_menu_myplaces" />
-    </LinearLayout>
+            app:shapeAppearanceOverlay="@style/CircleImageView"
+            app:srcCompat="@drawable/ic_person" />
 
+
+
+        <!-- Texto centrado -->
+        <TextView
+            android:id="@+id/tvWelcome"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:text="Bienvenido, Usuario"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black" />
+    </RelativeLayout>
+
+    <!-- TÍTULO SECCIÓN -->
     <TextView
         android:text="Mis Libros"
         android:textSize="18sp"
         android:textStyle="bold"
-        android:layout_marginTop="12dp"
+        android:layout_marginBottom="8dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
+    <!-- LISTA DE LIBROS -->
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerBooks"
+        android:id="@+id/recyclerViewBooks"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginTop="8dp" />
+        android:layout_marginBottom="12dp" />
 
+    <!-- BOTONES ABAJO -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center">
+        android:gravity="center"
+        android:weightSum="2">
 
         <Button
-            android:id="@+id/btnAddBook"
-            android:layout_width="wrap_content"
+            android:id="@+id/fabAdd"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Agregar Libro" />
+            android:layout_weight="1"
+            android:text="Agregar Libro"
+            android:textAllCaps="false"
+            android:backgroundTint="@android:color/holo_blue_light"
+            android:textColor="@android:color/white" />
 
         <Button
-            android:id="@+id/btnSearchBook"
-            android:layout_width="wrap_content"
+            android:id="@+id/fabSearch"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="Buscar Libro"
-            android:layout_marginStart="12dp" />
+            android:textAllCaps="false"
+            android:backgroundTint="@android:color/holo_green_light"
+            android:textColor="@android:color/white"
+            android:layout_marginStart="8dp" />
     </LinearLayout>
 </LinearLayout>
