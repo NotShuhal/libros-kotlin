@@ -19,7 +19,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 
-//papaya
+//papaya y membrillo
 class ProfileActivity : AppCompatActivity() {
 
     private lateinit var ivProfile: ImageView
