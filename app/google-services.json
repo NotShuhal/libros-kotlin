@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "877593942394",
+    "project_id": "mybooks-e01f5",
+    "storage_bucket": "mybooks-e01f5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:877593942394:android:52b780940e1fc0b314dec3",
+        "android_client_info": {
+          "package_name": "com.example.organizadorlibrosahoraenkotlin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAj5KUupZ3avCQMjLYQWurSPbYJI8gq0Yc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

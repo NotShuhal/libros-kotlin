@@ -2,6 +2,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.kapt")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -14,7 +15,6 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -36,27 +36,31 @@ android {
         jvmTarget = "17"
     }
 
-    // 🔹 Activamos ViewBinding para usar findViewById con seguridad
-    buildFeatures {
-        viewBinding = true
-    }
+    buildFeatures { viewBinding = true }
 }
 
 dependencies {
-    // 🔹 Dependencias básicas para XML + AppCompat
+    // Básicas
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.constraintlayout:constraintlayout:2.2.0")
-    //Dependencia Glide para mostrar portada de libros
+
+    // Glide
     implementation("com.github.bumptech.glide:glide:4.16.0")
-    // Room (para base de datos local)
+
+    // Room
     implementation("androidx.room:room-runtime:2.6.1")
-    kapt("androidx.room:room-compiler:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
+    kapt("androidx.room:room-compiler:2.6.1")
 
+    // Firebase (SOLO BOM, NINGUNA OTRA)
+    implementation(platform("com.google.firebase:firebase-bom:34.6.0"))
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.firebase:firebase-database-ktx")
+    implementation("com.google.firebase:firebase-storage-ktx")
 
-    // 🔹 Testing (opcional)
+    // Testing
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")

@@ -3,7 +3,6 @@ package com.example.organizadorlibrosahoraenkotlin.activities
 import android.app.Activity
 import android.content.Intent
 import android.graphics.BitmapFactory
-import android.net.Uri
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -14,6 +13,7 @@ import com.example.organizadorlibrosahoraenkotlin.SharedPrefManager
 import com.example.organizadorlibrosahoraenkotlin.adapters.BookAdapter
 import com.example.organizadorlibrosahoraenkotlin.data.BookDatabase
 import com.example.organizadorlibrosahoraenkotlin.databinding.ActivityMainBinding
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -22,12 +22,22 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var db: BookDatabase
     private lateinit var adapter: BookAdapter
+    private lateinit var auth: FirebaseAuth
     private val PROFILE_REQUEST_CODE = 1001
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        auth = FirebaseAuth.getInstance()
+
+        // Si NO hay usuario logueado en Firebase → enviamos al LoginActivity
+        if (auth.currentUser == null) {
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            return
+        }
 
         db = Room.databaseBuilder(
             applicationContext,

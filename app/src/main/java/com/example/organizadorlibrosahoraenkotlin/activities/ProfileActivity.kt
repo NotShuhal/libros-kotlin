@@ -14,12 +14,12 @@ import com.example.organizadorlibrosahoraenkotlin.R
 import com.example.organizadorlibrosahoraenkotlin.SharedPrefManager
 import com.example.organizadorlibrosahoraenkotlin.User
 import com.example.organizadorlibrosahoraenkotlin.data.BookDatabase
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 
-//papaya y membrillo
 class ProfileActivity : AppCompatActivity() {
 
     private lateinit var ivProfile: ImageView
@@ -27,6 +27,7 @@ class ProfileActivity : AppCompatActivity() {
     private lateinit var btnSave: Button
     private lateinit var btnLogout: Button
     private lateinit var db: BookDatabase
+    private lateinit var auth: FirebaseAuth
 
     private val PICK_IMAGE_REQUEST = 1
     private var savedImagePath: String? = null
@@ -40,6 +41,8 @@ class ProfileActivity : AppCompatActivity() {
         btnSave = findViewById(R.id.btnSave)
         btnLogout = findViewById(R.id.btnLogout)
 
+        auth = FirebaseAuth.getInstance()
+
         db = Room.databaseBuilder(
             applicationContext,
             BookDatabase::class.java,
@@ -49,7 +52,6 @@ class ProfileActivity : AppCompatActivity() {
         val user = SharedPrefManager.getUser(this)
         etName.setText(user?.username ?: "Usuario")
 
-        // Mostrar imagen si hay una guardada
         user?.profileImageUri?.let {
             val file = File(it)
             if (file.exists()) {
@@ -87,6 +89,9 @@ class ProfileActivity : AppCompatActivity() {
             lifecycleScope.launch {
                 db.bookDao().deleteAll()
                 SharedPrefManager.clearSession(this@ProfileActivity)
+
+                auth.signOut() // ← Cierre de sesión REAL en Firebase
+
                 runOnUiThread {
                     Toast.makeText(this@ProfileActivity, "Sesión cerrada", Toast.LENGTH_SHORT).show()
                     val intent = Intent(this@ProfileActivity, LoginActivity::class.java)

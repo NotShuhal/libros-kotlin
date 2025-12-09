@@ -9,6 +9,11 @@ lifecycleRuntimeKtx = "2.6.1"
 activityCompose = "1.11.0"
 composeBom = "2024.09.00"
 uiGraphics = "1.9.4"
+firebaseAuthKtx = "24.0.1"
+firebaseAuthKtxVersion = "23.2.1"
+firebaseDatabaseKtx = "21.0.0"
+firebaseStorageKtx = "21.0.2"
+firebaseBom = "33.1.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -26,6 +31,14 @@ androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics", version.ref = "uiGraphics" }
+firebase-auth-ktx = { group = "com.google.firebase", name = "firebase-auth-ktx", version.ref = "firebaseAuthKtx" }
+google-firebase-auth-ktx = { group = "com.google.firebase", name = "firebase-auth-ktx", version.ref = "firebaseAuthKtxVersion" }
+firebase-database-ktx = { group = "com.google.firebase", name = "firebase-database-ktx", version.ref = "firebaseDatabaseKtx" }
+firebase-storage-ktx = { group = "com.google.firebase", name = "firebase-storage-ktx", version.ref = "firebaseStorageKtx" }
+#firebase-bom = { group = "(platform(", name = "firebase-bom", version.ref = "firebaseBom" }
+
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
+
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
