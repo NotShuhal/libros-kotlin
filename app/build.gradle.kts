@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.organizadorlibrosahoraenkotlin"
-        minSdk = 21
+        minSdk = 23
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -52,13 +52,14 @@ dependencies {
     // Room
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
+    implementation(libs.play.services.location)
     kapt("androidx.room:room-compiler:2.6.1")
 
-    // Firebase (SOLO BOM, NINGUNA OTRA)
-    implementation(platform("com.google.firebase:firebase-bom:34.6.0"))
-    implementation("com.google.firebase:firebase-auth-ktx")
-    implementation("com.google.firebase:firebase-database-ktx")
-    implementation("com.google.firebase:firebase-storage-ktx")
+    // Firebase
+    implementation("com.google.firebase:firebase-auth-ktx:23.2.1")
+    implementation("com.google.firebase:firebase-database-ktx:21.0.0")
+    implementation("com.google.firebase:firebase-storage-ktx:21.0.2")
+
 
     // Testing
     testImplementation("junit:junit:4.13.2")

@@ -2,12 +2,12 @@ package com.example.organizadorlibrosahoraenkotlin.activities
 
 import android.app.Activity
 import android.content.Intent
-import android.graphics.BitmapFactory
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.room.Room
+import com.bumptech.glide.Glide
 import com.example.organizadorlibrosahoraenkotlin.R
 import com.example.organizadorlibrosahoraenkotlin.SharedPrefManager
 import com.example.organizadorlibrosahoraenkotlin.adapters.BookAdapter
@@ -15,6 +15,9 @@ import com.example.organizadorlibrosahoraenkotlin.data.BookDatabase
 import com.example.organizadorlibrosahoraenkotlin.databinding.ActivityMainBinding
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
+import com.google.android.gms.location.LocationServices
+import com.google.firebase.database.FirebaseDatabase
+import com.example.organizadorlibrosahoraenkotlin.activities.NearbyUsersActivity
 import java.io.File
 
 class MainActivity : AppCompatActivity() {
@@ -29,6 +32,12 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        binding.fabSearch.setOnClickListener {
+            startActivity(Intent(this, SearchBookActivity::class.java))
+        }
+        binding.btnNearby.setOnClickListener {
+            startActivity(Intent(this, NearbyUsersActivity::class.java))
+        }
 
         auth = FirebaseAuth.getInstance()
 
@@ -78,7 +87,31 @@ class MainActivity : AppCompatActivity() {
 
         loadBooks()
         loadUserInfo()
+        updateUserLocation()
     }
+
+    private fun updateUserLocation() {
+        val uid = auth.currentUser?.uid ?: return
+
+        val fusedLocationClient =
+            LocationServices.getFusedLocationProviderClient(this)
+
+        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+            if (location != null) {
+                val updates = mapOf(
+                    "lat" to location.latitude,
+                    "lng" to location.longitude
+                )
+
+                FirebaseDatabase.getInstance()
+                    .reference
+                    .child("users")
+                    .child(uid)
+                    .updateChildren(updates)
+            }
+        }
+    }
+
 
     override fun onResume() {
         super.onResume()
@@ -94,22 +127,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadUserInfo() {
-        val user = SharedPrefManager.getUser(this)
-        binding.tvWelcome.text = if (!user?.username.isNullOrEmpty()) {
-            "Bienvenido, ${user?.username}"
-        } else "Bienvenido, Usuario"
+        val user = SharedPrefManager.getUser(this) ?: return
 
-        val imagePath = user?.profileImageUri
-        if (!imagePath.isNullOrEmpty()) {
-            val file = File(imagePath)
-            if (file.exists()) {
-                val bitmap = BitmapFactory.decodeFile(file.absolutePath)
-                binding.btnProfile.setImageBitmap(bitmap)
-                return
-            }
+        binding.tvWelcome.text = "Bienvenido, ${user.username}"
+
+        if (!user.profileImageUri.isNullOrEmpty()) {
+            Glide.with(this)
+                .load(user.profileImageUri)
+                .placeholder(R.drawable.ic_person)
+                .into(binding.btnProfile)
+        } else {
+            binding.btnProfile.setImageResource(R.drawable.ic_person)
         }
-        binding.btnProfile.setImageResource(R.drawable.ic_person)
     }
+
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)

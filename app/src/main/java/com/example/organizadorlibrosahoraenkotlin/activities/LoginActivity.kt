@@ -27,10 +27,9 @@ class LoginActivity : AppCompatActivity() {
 
         auth = FirebaseAuth.getInstance()
 
-        // Si ya está logueado en Firebase, saltar al Main
+        // Si el usuario ya está autenticado en Firebase
         if (auth.currentUser != null) {
-            startActivity(Intent(this, MainActivity::class.java))
-            finish()
+            goToMain()
             return
         }
 
@@ -53,6 +52,7 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun performLogin(email: String, password: String) {
+
         if (email.isEmpty()) {
             etEmail.error = "Ingresa un correo"
             etEmail.requestFocus()
@@ -71,32 +71,16 @@ class LoginActivity : AppCompatActivity() {
             return
         }
 
-        // AUTENTICACIÓN REAL CON FIREBASE
+        btnLogin.isEnabled = false
+
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
+                btnLogin.isEnabled = true
+
                 if (task.isSuccessful) {
-
-                    val firebaseUser = auth.currentUser
-
-                    // Firebase no almacena username, así que:
-                    // si ya existe un usuario guardado en SharedPref, lo conservamos
-                    // si no, creamos uno básico
-                    val storedUser = SharedPrefManager.getUser(this)
-                    if (storedUser == null) {
-                        SharedPrefManager.saveUser(
-                            this,
-                            User(
-                                email = email,
-                                username = firebaseUser?.displayName ?: "Usuario",
-                                country = "",
-                                profileImageUri = null
-                            )
-                        )
-                    }
-
+                    saveUserIfNeeded(email)
                     Toast.makeText(this, "Inicio de sesión exitoso", Toast.LENGTH_SHORT).show()
-                    startActivity(Intent(this, MainActivity::class.java))
-                    finish()
+                    goToMain()
                 } else {
                     Toast.makeText(
                         this,
@@ -105,5 +89,26 @@ class LoginActivity : AppCompatActivity() {
                     ).show()
                 }
             }
+    }
+
+    private fun saveUserIfNeeded(email: String) {
+        val storedUser = SharedPrefManager.getUser(this)
+        if (storedUser == null) {
+            val firebaseUser = auth.currentUser
+            SharedPrefManager.saveUser(
+                this,
+                User(
+                    email = email,
+                    username = firebaseUser?.displayName ?: "Usuario",
+                    country = "",
+                    profileImageUri = null
+                )
+            )
+        }
+    }
+
+    private fun goToMain() {
+        startActivity(Intent(this, MainActivity::class.java))
+        finish()
     }
 }
