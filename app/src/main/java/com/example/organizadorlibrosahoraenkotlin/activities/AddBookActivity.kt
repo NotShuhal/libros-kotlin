@@ -11,9 +11,13 @@ import com.example.organizadorlibrosahoraenkotlin.R
 import com.example.organizadorlibrosahoraenkotlin.data.BookDatabase
 import com.example.organizadorlibrosahoraenkotlin.models.Book
 import kotlinx.coroutines.launch
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
+import com.example.organizadorlibrosahoraenkotlin.models.FirebaseBook
 
 class AddBookActivity : AppCompatActivity() {
 
+    private val auth = FirebaseAuth.getInstance()
     private lateinit var etTitle: EditText
     private lateinit var etAuthor: EditText
     private lateinit var etPublisher: EditText
@@ -61,10 +65,31 @@ class AddBookActivity : AppCompatActivity() {
             return
         }
 
-        val book = Book(title = title, author = author, publisher = publisher, note = note)
+        val localBook = Book(title = title, author = author, publisher = publisher, note = note)
+        val firebaseBook = FirebaseBook(title, author, publisher, note)
+
+        val uid = auth.currentUser?.uid ?: return
+        val bookId = FirebaseDatabase.getInstance()
+            .reference
+            .child("users")
+            .child(uid)
+            .child("books")
+            .push()
+            .key ?: return
 
         lifecycleScope.launch {
-            db.bookDao().insert(book)
+            // Guardar en Room
+            db.bookDao().insert(localBook)
+
+            // Guardar en Firebase
+            FirebaseDatabase.getInstance()
+                .reference
+                .child("users")
+                .child(uid)
+                .child("books")
+                .child(bookId)
+                .setValue(firebaseBook)
+
             runOnUiThread {
                 Toast.makeText(this@AddBookActivity, "Libro agregado con éxito", Toast.LENGTH_SHORT).show()
                 finish()
