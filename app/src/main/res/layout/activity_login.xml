@@ -40,6 +40,14 @@
         android:text="Iniciar sesión"
         android:layout_marginTop="16dp" />
 
+    <Button
+        android:id="@+id/btnGoogleLogin"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Continuar con Google"
+        android:layout_marginTop="12dp"
+        android:backgroundTint="@color/black"
+        android:textColor="@android:color/white"/>
 
     <TextView
         android:id="@+id/tvCreateAccount"

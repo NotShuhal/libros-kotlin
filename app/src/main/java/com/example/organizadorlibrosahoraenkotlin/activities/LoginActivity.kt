@@ -12,8 +12,16 @@ import com.example.organizadorlibrosahoraenkotlin.R
 import com.example.organizadorlibrosahoraenkotlin.SharedPrefManager
 import com.example.organizadorlibrosahoraenkotlin.User
 import com.google.firebase.auth.FirebaseAuth
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
+import com.google.firebase.auth.GoogleAuthProvider
 
 class LoginActivity : AppCompatActivity() {
+
+    private lateinit var googleSignInClient: GoogleSignInClient
+    private val GOOGLE_SIGN_IN = 1001
 
     private lateinit var etEmail: EditText
     private lateinit var etPassword: EditText
@@ -35,6 +43,13 @@ class LoginActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_login)
 
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+
+        googleSignInClient = GoogleSignIn.getClient(this, gso)
+
         etEmail = findViewById(R.id.etEmail)
         etPassword = findViewById(R.id.etPassword)
         btnLogin = findViewById(R.id.btnLogin)
@@ -44,6 +59,11 @@ class LoginActivity : AppCompatActivity() {
             val email = etEmail.text.toString().trim()
             val password = etPassword.text.toString()
             performLogin(email, password)
+        }
+
+        findViewById<Button>(R.id.btnGoogleLogin).setOnClickListener {
+            val signInIntent = googleSignInClient.signInIntent
+            startActivityForResult(signInIntent, GOOGLE_SIGN_IN)
         }
 
         tvCreateAccount.setOnClickListener {
@@ -111,4 +131,47 @@ class LoginActivity : AppCompatActivity() {
         startActivity(Intent(this, MainActivity::class.java))
         finish()
     }
+
+    private fun firebaseAuthWithGoogle(idToken: String) {
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
+
+        auth.signInWithCredential(credential)
+            .addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+
+                    val firebaseUser = auth.currentUser
+
+                    SharedPrefManager.saveUser(
+                        this,
+                        User(
+                            email = firebaseUser?.email ?: "",
+                            username = firebaseUser?.displayName ?: "Usuario",
+                            country = "",
+                            profileImageUri = firebaseUser?.photoUrl?.toString()
+                        )
+                    )
+
+                    Toast.makeText(this, "Sesión iniciada con Google", Toast.LENGTH_SHORT).show()
+                    goToMain()
+
+                } else {
+                    Toast.makeText(this, "Falló autenticación con Firebase", Toast.LENGTH_SHORT).show()
+                }
+            }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == GOOGLE_SIGN_IN) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(data)
+            try {
+                val account = task.getResult(ApiException::class.java)
+                firebaseAuthWithGoogle(account.idToken!!)
+            } catch (e: ApiException) {
+                Toast.makeText(this, "Error al iniciar con Google", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
 }
