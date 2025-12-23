@@ -34,15 +34,32 @@ class NearbyUsersActivity : AppCompatActivity() {
 
         auth = FirebaseAuth.getInstance()
 
-        adapter = NearbyUsersAdapter(emptyList())
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.title = "Usuarios cercanos"
+
+        adapter = NearbyUsersAdapter(emptyList()) { user ->
+            val myUid = auth.uid ?: return@NearbyUsersAdapter
+
+            val chatId = if (myUid < user.uid) {
+                "${myUid}_${user.uid}"
+            } else {
+                "${user.uid}_$myUid"
+            }
+
+            val intent = Intent(this, ChatActivity::class.java)
+            intent.putExtra("chatId", chatId)
+            intent.putExtra("otherUid", user.uid)
+            intent.putExtra("username", user.username)
+            startActivity(intent)
+        }
+        val btnBack = findViewById<Button>(R.id.btnBackToMain)
+        btnBack.setOnClickListener {
+            finish()
+        }
 
         val recycler = findViewById<RecyclerView>(R.id.recyclerNearbyUsers)
         recycler.layoutManager = LinearLayoutManager(this)
         recycler.adapter = adapter
-
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "Usuarios cercanos"
-
 
         loadNearbyUsers()
     }
@@ -53,7 +70,7 @@ class NearbyUsersActivity : AppCompatActivity() {
     }
 
     private suspend fun getMyWishlist(): Set<String> {
-        val uid = FirebaseAuth.getInstance().uid ?: return emptySet()
+        val uid = auth.uid ?: return emptySet()
 
         val snapshot = FirebaseDatabase.getInstance()
             .reference
@@ -77,17 +94,16 @@ class NearbyUsersActivity : AppCompatActivity() {
         val dLat = Math.toRadians(lat2 - lat1)
         val dLon = Math.toRadians(lon2 - lon1)
 
-        val a = Math.sin(dLat / 2).pow(2.0) +
-                Math.cos(Math.toRadians(lat1)) *
-                Math.cos(Math.toRadians(lat2)) *
-                Math.sin(dLon / 2).pow(2.0)
+        val a = sin(dLat / 2).pow(2.0) +
+                cos(Math.toRadians(lat1)) *
+                cos(Math.toRadians(lat2)) *
+                sin(dLon / 2).pow(2.0)
 
-        val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-        return r * c
+        return 2 * r * atan2(sqrt(a), sqrt(1 - a))
     }
 
     private fun loadNearbyUsers() {
-        val myUid = FirebaseAuth.getInstance().uid ?: return
+        val myUid = auth.uid ?: return
         val usersRef = FirebaseDatabase.getInstance().reference.child("users")
 
         lifecycleScope.launch {
@@ -106,8 +122,6 @@ class NearbyUsersActivity : AppCompatActivity() {
                     val lat = userSnap.child("lat").getValue(Double::class.java) ?: continue
                     val lng = userSnap.child("lng").getValue(Double::class.java) ?: continue
 
-                    val distance = distanceKm(myLat, myLng, lat, lng)
-
                     val matchedBooks = userSnap.child("books").children
                         .filter {
                             it.child("forTrade").getValue(Boolean::class.java) == true &&
@@ -120,19 +134,16 @@ class NearbyUsersActivity : AppCompatActivity() {
                             UserNearby(
                                 uid = uid,
                                 username = userSnap.child("username").getValue(String::class.java) ?: "Usuario",
-                                distanceKm = distance,
+                                distanceKm = distanceKm(myLat, myLng, lat, lng),
                                 matchedBooks = matchedBooks
                             )
                         )
                     }
                 }
 
-                val ordered = results.sortedWith(
-                    compareBy<UserNearby> { it.distanceKm }
-                        .thenByDescending { it.matchedBooks.size }
+                adapter.update(
+                    results.sortedBy { it.distanceKm }
                 )
-
-                adapter.update(ordered)
             }
         }
     }

@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.organizadorlibrosahoraenkotlin.R
@@ -24,33 +25,48 @@ private const val CAMERA_PERMISSION_CODE = 102
 
 class ChatActivity : AppCompatActivity() {
 
+    // UI
     private lateinit var btnBack: ImageButton
     private lateinit var ivUser: ImageView
     private lateinit var tvUsername: TextView
     private lateinit var btnCamera: ImageButton
-
     private lateinit var recyclerView: RecyclerView
     private lateinit var etMessage: EditText
     private lateinit var btnSend: Button
 
+    // Chat
     private val messages = mutableListOf<ChatMessage>()
     private lateinit var adapter: ChatAdapter
+    private lateinit var chatId: String
 
+    // Firebase
     private val auth = FirebaseAuth.getInstance()
     private val database = FirebaseDatabase.getInstance()
-    private lateinit var storage: FirebaseStorage   // ✅ AQUÍ VA
-
-    private lateinit var chatId: String
+    private lateinit var storage: FirebaseStorage
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chat)
 
-        // Firebase Storage
         storage = FirebaseStorage.getInstance()
 
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "Usuarios cercanos"
+        // Intent data
+        val otherUid = intent.getStringExtra("otherUid") ?: run {
+            finish()
+            return
+        }
+        val username = intent.getStringExtra("username") ?: "Usuario"
+
+        val myUid = auth.currentUser?.uid ?: run {
+            finish()
+            return
+        }
+
+        // 🔑 Chat ID consistente para ambos usuarios
+        chatId = if (myUid < otherUid)
+            "${myUid}_$otherUid"
+        else
+            "${otherUid}_$myUid"
 
         // Header
         btnBack = findViewById(R.id.btnBack)
@@ -58,12 +74,10 @@ class ChatActivity : AppCompatActivity() {
         tvUsername = findViewById(R.id.tvUsername)
         btnCamera = findViewById(R.id.btnCamera)
 
+        tvUsername.text = username
         btnBack.setOnClickListener { finish() }
 
-        chatId = intent.getStringExtra("chatId") ?: return
-        tvUsername.text = intent.getStringExtra("username") ?: "Usuario"
-
-        // Chat
+        // Chat UI
         recyclerView = findViewById(R.id.recyclerChat)
         etMessage = findViewById(R.id.etMessage)
         btnSend = findViewById(R.id.btnSend)
@@ -72,29 +86,34 @@ class ChatActivity : AppCompatActivity() {
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = adapter
 
-        btnSend.setOnClickListener { sendMessage() }
+        btnSend.setOnClickListener { sendTextMessage() }
         btnCamera.setOnClickListener { openCamera() }
 
         listenMessages()
     }
 
+    // 🔙 ActionBar back
+    override fun onSupportNavigateUp(): Boolean {
+        finish()
+        return true
+    }
+
     // 📸 Cámara
     private fun openCamera() {
-        if (checkSelfPermission(Manifest.permission.CAMERA)
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
             == PackageManager.PERMISSION_GRANTED
         ) {
-            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-            startActivityForResult(intent, CAMERA_REQUEST_CODE)
+            startActivityForResult(
+                Intent(MediaStore.ACTION_IMAGE_CAPTURE),
+                CAMERA_REQUEST_CODE
+            )
         } else {
-            requestPermissions(
+            ActivityCompat.requestPermissions(
+                this,
                 arrayOf(Manifest.permission.CAMERA),
                 CAMERA_PERMISSION_CODE
             )
         }
-    }
-    override fun onSupportNavigateUp(): Boolean {
-        finish()
-        return true
     }
 
     override fun onRequestPermissionsResult(
@@ -139,7 +158,7 @@ class ChatActivity : AppCompatActivity() {
     }
 
     // 💬 Texto
-    private fun sendMessage() {
+    private fun sendTextMessage() {
         val text = etMessage.text.toString().trim()
         if (text.isEmpty()) return
 
@@ -149,7 +168,12 @@ class ChatActivity : AppCompatActivity() {
             timestamp = System.currentTimeMillis()
         )
 
-        database.reference.child("messages").child(chatId).push().setValue(message)
+        database.reference
+            .child("messages")
+            .child(chatId)
+            .push()
+            .setValue(message)
+
         etMessage.text.clear()
     }
 
@@ -161,12 +185,20 @@ class ChatActivity : AppCompatActivity() {
             timestamp = System.currentTimeMillis()
         )
 
-        database.reference.child("messages").child(chatId).push().setValue(message)
+        database.reference
+            .child("messages")
+            .child(chatId)
+            .push()
+            .setValue(message)
     }
 
+    // 👂 Escuchar mensajes
     private fun listenMessages() {
-        database.reference.child("messages").child(chatId)
+        database.reference
+            .child("messages")
+            .child(chatId)
             .addChildEventListener(object : ChildEventListener {
+
                 override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
                     snapshot.getValue(ChatMessage::class.java)?.let {
                         messages.add(it)
@@ -174,6 +206,7 @@ class ChatActivity : AppCompatActivity() {
                         recyclerView.scrollToPosition(messages.size - 1)
                     }
                 }
+
                 override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
                 override fun onChildRemoved(snapshot: DataSnapshot) {}
                 override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
