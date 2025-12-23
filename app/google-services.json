@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "877593942394",
+    "firebase_url": "https://mybooks-e01f5-default-rtdb.firebaseio.com",
+    "project_id": "mybooks-e01f5",
+    "storage_bucket": "mybooks-e01f5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:877593942394:android:52b780940e1fc0b314dec3",
+        "android_client_info": {
+          "package_name": "com.example.organizadorlibrosahoraenkotlin"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "877593942394-553b8qg94eaj4jf2ca0spr3c289iroch.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.organizadorlibrosahoraenkotlin",
+            "certificate_hash": "0c56ed2ad19864617f05b323e89ed70267039539"
+          }
+        },
+        {
+          "client_id": "877593942394-buq11f8jptj04j9f1i5d7e1b5h0u7dns.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAj5KUupZ3avCQMjLYQWurSPbYJI8gq0Yc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "877593942394-buq11f8jptj04j9f1i5d7e1b5h0u7dns.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

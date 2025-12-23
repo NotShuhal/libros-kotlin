@@ -18,6 +18,9 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
+import com.example.organizadorlibrosahoraenkotlin.models.FirebaseBook
 
 class SearchBookActivity : AppCompatActivity() {
 
@@ -28,6 +31,8 @@ class SearchBookActivity : AppCompatActivity() {
     private lateinit var progressBar: ProgressBar
     private lateinit var adapter: BookSearchAdapter
     private lateinit var db: BookDatabase
+
+    private val auth = FirebaseAuth.getInstance()
 
     private val books = mutableListOf<BookResult>()
 
@@ -51,7 +56,9 @@ class SearchBookActivity : AppCompatActivity() {
             applicationContext,
             BookDatabase::class.java,
             "books-db"
-        ).build()
+        )
+            .fallbackToDestructiveMigration()
+            .build()
 
         btnSearch.setOnClickListener {
             val query = etSearch.text.toString().trim()
@@ -122,8 +129,33 @@ class SearchBookActivity : AppCompatActivity() {
             note = ""
         )
 
+        val firebaseBook = FirebaseBook(
+            result.title,
+            result.author,
+            result.publisher,
+            ""
+        )
+
+        val uid = auth.currentUser?.uid ?: return
+        val bookId = FirebaseDatabase.getInstance()
+            .reference
+            .child("users")
+            .child(uid)
+            .child("books")
+            .push()
+            .key ?: return
+
         lifecycleScope.launch {
             db.bookDao().insert(book)
+
+            FirebaseDatabase.getInstance()
+                .reference
+                .child("users")
+                .child(uid)
+                .child("books")
+                .child(bookId)
+                .setValue(firebaseBook)
+
             runOnUiThread {
                 Toast.makeText(this@SearchBookActivity, "Libro agregado a tu lista", Toast.LENGTH_SHORT).show()
             }

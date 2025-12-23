@@ -10,14 +10,18 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.room.Room
+import com.bumptech.glide.Glide
 import com.example.organizadorlibrosahoraenkotlin.R
 import com.example.organizadorlibrosahoraenkotlin.SharedPrefManager
 import com.example.organizadorlibrosahoraenkotlin.User
 import com.example.organizadorlibrosahoraenkotlin.data.BookDatabase
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.storage.FirebaseStorage
 
 class ProfileActivity : AppCompatActivity() {
 
@@ -26,9 +30,79 @@ class ProfileActivity : AppCompatActivity() {
     private lateinit var btnSave: Button
     private lateinit var btnLogout: Button
     private lateinit var db: BookDatabase
+    private lateinit var auth: FirebaseAuth
+    private lateinit var database: FirebaseDatabase
+
+    private lateinit var storage: FirebaseStorage
+
+    private var selectedImageUri: Uri? = null
 
     private val PICK_IMAGE_REQUEST = 1
     private var savedImagePath: String? = null
+
+    private fun saveUserProfile(
+        uid: String,
+        username: String,
+        imageUrl: String?
+    ) {
+        val userMap = mapOf(
+            "email" to auth.currentUser?.email,
+            "username" to username,
+            "country" to "",
+            "profileImageUrl" to imageUrl
+        )
+
+        // 1. Guardar en Realtime Database
+        database.reference
+            .child("users")
+            .child(uid)
+            .setValue(userMap)
+            .addOnSuccessListener {
+
+                // 2. Actualizar Firebase Auth
+                val profileUpdates = com.google.firebase.auth.userProfileChangeRequest {
+                    displayName = username
+                    imageUrl?.let { photoUri = Uri.parse(it) }
+                }
+
+                auth.currentUser?.updateProfile(profileUpdates)
+
+                // 3. 🔥 ACTUALIZAR SharedPreferences (CLAVE)
+                SharedPrefManager.saveUser(
+                    this,
+                    User(
+                        email = auth.currentUser?.email ?: "",
+                        username = username,
+                        country = "",
+                        description = "",
+                        profileImageUri = imageUrl
+                    )
+                )
+
+                Toast.makeText(this, "Perfil actualizado", Toast.LENGTH_SHORT).show()
+                setResult(Activity.RESULT_OK)
+                finish()
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Error al guardar perfil", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+
+
+    private fun uploadProfileImage(uid: String, username: String) {
+        val ref = storage.reference.child("profile_images/$uid.jpg")
+
+        ref.putFile(selectedImageUri!!)
+            .addOnSuccessListener {
+                ref.downloadUrl.addOnSuccessListener { uri ->
+                    saveUserProfile(uid, username, uri.toString())
+                }
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Error al subir imagen", Toast.LENGTH_SHORT).show()
+            }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,23 +112,28 @@ class ProfileActivity : AppCompatActivity() {
         etName = findViewById(R.id.etName)
         btnSave = findViewById(R.id.btnSave)
         btnLogout = findViewById(R.id.btnLogout)
+        auth = FirebaseAuth.getInstance()
+        database = FirebaseDatabase.getInstance()
+        storage = FirebaseStorage.getInstance()
+
+        auth = FirebaseAuth.getInstance()
 
         db = Room.databaseBuilder(
             applicationContext,
             BookDatabase::class.java,
             "books-db"
-        ).build()
+        )
+            .fallbackToDestructiveMigration()
+            .build()
 
         val user = SharedPrefManager.getUser(this)
         etName.setText(user?.username ?: "Usuario")
 
-        // Mostrar imagen si hay una guardada
         user?.profileImageUri?.let {
-            val file = File(it)
-            if (file.exists()) {
-                ivProfile.setImageBitmap(BitmapFactory.decodeFile(file.absolutePath))
-                savedImagePath = it
-            }
+            Glide.with(this)
+                .load(it)
+                .placeholder(R.drawable.ic_person)
+                .into(ivProfile)
         }
 
         ivProfile.setOnClickListener {
@@ -69,32 +148,30 @@ class ProfileActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            val updatedUser = user?.copy(
-                username = name,
-                profileImageUri = savedImagePath
-            ) ?: User(email = "", username = name, country = "", profileImageUri = savedImagePath)
+            val uid = auth.currentUser?.uid ?: return@setOnClickListener
 
-            SharedPrefManager.saveUser(this, updatedUser)
-            Toast.makeText(this, "Perfil actualizado", Toast.LENGTH_SHORT).show()
+            if (selectedImageUri != null) {
+                uploadProfileImage(uid, name)
+            } else {
+                saveUserProfile(uid, name, null)
+            }
+        }
 
-            val resultIntent = Intent()
-            setResult(Activity.RESULT_OK, resultIntent)
+
+
+        btnLogout.setOnClickListener {
+
+            FirebaseAuth.getInstance().signOut()
+            SharedPrefManager.clearSession(this)
+
+            Toast.makeText(this, "Sesión cerrada", Toast.LENGTH_SHORT).show()
+
+            val intent = Intent(this, LoginActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
             finish()
         }
 
-        btnLogout.setOnClickListener {
-            lifecycleScope.launch {
-                db.bookDao().deleteAll()
-                SharedPrefManager.clearSession(this@ProfileActivity)
-                runOnUiThread {
-                    Toast.makeText(this@ProfileActivity, "Sesión cerrada", Toast.LENGTH_SHORT).show()
-                    val intent = Intent(this@ProfileActivity, LoginActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    startActivity(intent)
-                    finish()
-                }
-            }
-        }
 
         findViewById<ImageButton>(R.id.btnBack).setOnClickListener { finish() }
     }
@@ -105,8 +182,8 @@ class ProfileActivity : AppCompatActivity() {
             val imageUri = data?.data ?: return
             val copiedPath = copyImageToInternalStorage(imageUri)
             if (copiedPath != null) {
-                savedImagePath = copiedPath
-                ivProfile.setImageBitmap(BitmapFactory.decodeFile(copiedPath))
+                selectedImageUri = imageUri
+                ivProfile.setImageURI(imageUri)
             } else {
                 Toast.makeText(this, "Error al guardar imagen", Toast.LENGTH_SHORT).show()
             }

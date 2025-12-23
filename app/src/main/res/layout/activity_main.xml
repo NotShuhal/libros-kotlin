@@ -63,7 +63,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
-        android:weightSum="2">
+        android:weightSum="3">
 
         <Button
             android:id="@+id/fabAdd"
@@ -83,6 +83,17 @@
             android:text="Buscar Libro"
             android:textAllCaps="false"
             android:backgroundTint="@android:color/holo_green_light"
+            android:textColor="@android:color/white"
+            android:layout_marginStart="8dp" />
+
+        <Button
+            android:id="@+id/btnNearby"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Intercambios"
+            android:textAllCaps="false"
+            android:backgroundTint="@android:color/holo_blue_light"
             android:textColor="@android:color/white"
             android:layout_marginStart="8dp" />
     </LinearLayout>
