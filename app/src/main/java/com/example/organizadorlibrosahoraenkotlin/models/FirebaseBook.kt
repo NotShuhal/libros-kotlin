@@ -4,6 +4,7 @@ data class FirebaseBook(
     val title: String = "",
     val author: String = "",
     val publisher: String = "",
-    val note: String = "",
-    val forTrade: Boolean = true
+    val note: String? = null,
+    val forTrade: Boolean = false,
+    val wishlist: Boolean = false
 )

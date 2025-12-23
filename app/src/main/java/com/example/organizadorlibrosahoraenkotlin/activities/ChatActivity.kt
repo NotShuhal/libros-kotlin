@@ -49,6 +49,9 @@ class ChatActivity : AppCompatActivity() {
         // Firebase Storage
         storage = FirebaseStorage.getInstance()
 
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.title = "Usuarios cercanos"
+
         // Header
         btnBack = findViewById(R.id.btnBack)
         ivUser = findViewById(R.id.ivUser)
@@ -88,6 +91,10 @@ class ChatActivity : AppCompatActivity() {
                 CAMERA_PERMISSION_CODE
             )
         }
+    }
+    override fun onSupportNavigateUp(): Boolean {
+        finish()
+        return true
     }
 
     override fun onRequestPermissionsResult(

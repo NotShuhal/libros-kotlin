@@ -1,53 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="12dp"
-    android:background="@android:color/white"
     android:layout_marginBottom="8dp"
+    android:background="@android:color/white"
     android:elevation="2dp">
 
     <TextView
         android:id="@+id/tvBookTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:text="Título del libro"
         android:textStyle="bold"
-        android:textSize="18sp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:textSize="18sp" />
 
     <TextView
         android:id="@+id/tvBookAuthor"
-        android:text="Autor"
-        android:textSize="14sp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:text="Autor"
+        android:textSize="14sp"
         android:layout_marginTop="2dp" />
 
     <TextView
         android:id="@+id/tvBookPublisher"
-        android:text="Editorial"
-        android:textSize="14sp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:text="Editorial"
+        android:textSize="14sp"
         android:layout_marginTop="2dp" />
 
     <TextView
         android:id="@+id/tvBookNote"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:text="Nota adicional"
         android:textSize="13sp"
         android:textColor="#555555"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
         android:layout_marginTop="4dp" />
+
+    <!-- Intercambio -->
+    <Switch
+        android:id="@+id/switchForTrade"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Habilitar intercambio"
+        android:layout_marginTop="8dp"
+        tools:ignore="UseSwitchCompatOrMaterialXml" />
+
+    <!-- Wishlist -->
+    <Switch
+        android:id="@+id/switchWishlist"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Agregar a deseados"
+        android:layout_marginTop="4dp"
+        tools:ignore="UseSwitchCompatOrMaterialXml" />
 
     <ImageButton
         android:id="@+id/btnDeleteBook"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:layout_marginTop="4dp"
         android:src="@android:drawable/ic_menu_delete"
         android:background="@null"
-        android:contentDescription="Eliminar libro"
-        android:layout_gravity="end"
-        android:layout_marginTop="4dp" />
+        android:contentDescription="Eliminar libro" />
+
 </LinearLayout>

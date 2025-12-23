@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <EditText android:id="@+id/etTitle" android:hint="Título" android:layout_height="match_parent" android:layout_width="match_parent"/>
+    <EditText android:id="@+id/etAuthor" android:hint="Autor" android:layout_height="match_parent" android:layout_width="match_parent"/>
+    <EditText android:id="@+id/etPublisher" android:hint="Editorial" android:layout_height="match_parent" android:layout_width="match_parent"/>
+
+</LinearLayout>

@@ -5,6 +5,7 @@ import com.example.organizadorlibrosahoraenkotlin.models.Book
 
 @Dao
 interface BookDao {
+
     @Query("SELECT * FROM books")
     suspend fun getAll(): List<Book>
 
@@ -13,6 +14,9 @@ interface BookDao {
 
     @Delete
     suspend fun delete(book: Book)
+
+    @Update
+    suspend fun update(book: Book)
 
     @Query("DELETE FROM books")
     suspend fun deleteAll()

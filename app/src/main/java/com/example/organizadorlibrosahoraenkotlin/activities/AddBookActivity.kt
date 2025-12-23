@@ -36,7 +36,9 @@ class AddBookActivity : AppCompatActivity() {
             applicationContext,
             BookDatabase::class.java,
             "books-db"
-        ).build()
+        )
+            .fallbackToDestructiveMigration()
+            .build()
 
         etTitle = findViewById(R.id.etTitle)
         etAuthor = findViewById(R.id.etAuthor)

@@ -8,209 +8,132 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.organizadorlibrosahoraenkotlin.R
 import com.example.organizadorlibrosahoraenkotlin.adapters.NearbyUsersAdapter
+import com.example.organizadorlibrosahoraenkotlin.models.FirebaseBook
 import com.example.organizadorlibrosahoraenkotlin.models.UserNearby
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlin.math.*
 
 class NearbyUsersActivity : AppCompatActivity() {
 
-    companion object {
-        private const val LOCATION_PERMISSION_CODE = 2001
-        private const val MAX_DISTANCE_METERS = 5_000 // 5 km
-    }
-
-    private val auth = FirebaseAuth.getInstance()
-    private val database = FirebaseDatabase.getInstance()
-
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
-
-    private val users = mutableListOf<UserNearby>()
-
-    private var currentLat: Double? = null
-    private var currentLng: Double? = null
+    private lateinit var adapter: NearbyUsersAdapter
+    private lateinit var auth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_nearby_users)
 
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        auth = FirebaseAuth.getInstance()
+
+        adapter = NearbyUsersAdapter(emptyList())
 
         val recycler = findViewById<RecyclerView>(R.id.recyclerNearbyUsers)
         recycler.layoutManager = LinearLayoutManager(this)
-        recycler.adapter = NearbyUsersAdapter(users) { user ->
-            openChat(user)
-        }
+        recycler.adapter = adapter
 
-        findViewById<Button>(R.id.btnBackToMain).setOnClickListener {
-            finish()
-        }
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.title = "Usuarios cercanos"
 
-        checkLocationPermission()
+
+        loadNearbyUsers()
     }
 
-    // =========================
-    // PERMISOS
-    // =========================
-
-    private fun checkLocationPermission() {
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                LOCATION_PERMISSION_CODE
-            )
-        } else {
-            getCurrentLocation()
-        }
+    override fun onSupportNavigateUp(): Boolean {
+        finish()
+        return true
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    private suspend fun getMyWishlist(): Set<String> {
+        val uid = FirebaseAuth.getInstance().uid ?: return emptySet()
 
-        if (requestCode == LOCATION_PERMISSION_CODE &&
-            grantResults.isNotEmpty() &&
-            grantResults[0] == PackageManager.PERMISSION_GRANTED
-        ) {
-            getCurrentLocation()
-        } else {
-            Toast.makeText(this, "Permiso de ubicación denegado", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    // =========================
-    // UBICACIÓN
-    // =========================
-
-    private fun getCurrentLocation() {
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) return
-
-        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-            if (location != null) {
-                currentLat = location.latitude
-                currentLng = location.longitude
-
-                saveLocationToFirebase()
-                loadNearbyUsers()
-            } else {
-                Toast.makeText(this, "No se pudo obtener ubicación", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    private fun saveLocationToFirebase() {
-        val uid = auth.currentUser?.uid ?: return
-
-        val locationData = mapOf(
-            "lat" to currentLat,
-            "lng" to currentLng,
-            "updatedAt" to System.currentTimeMillis()
-        )
-
-        database.reference
+        val snapshot = FirebaseDatabase.getInstance()
+            .reference
             .child("users")
             .child(uid)
-            .child("location")
-            .setValue(locationData)
+            .child("books")
+            .get()
+            .await()
+
+        return snapshot.children
+            .filter { it.child("wishlist").getValue(Boolean::class.java) == true }
+            .mapNotNull { it.child("title").getValue(String::class.java) }
+            .toSet()
     }
 
-    // =========================
-    // USUARIOS CERCANOS
-    // =========================
-
-    private fun loadNearbyUsers() {
-        val myLat = currentLat ?: return
-        val myLng = currentLng ?: return
-        val currentUid = auth.currentUser?.uid ?: return
-
-        database.reference.child("users").get().addOnSuccessListener { snapshot ->
-            users.clear()
-
-            for (child in snapshot.children) {
-                val uid = child.key ?: continue
-                if (uid == currentUid) continue
-
-                val username = child.child("username").getValue(String::class.java) ?: continue
-                val locationSnap = child.child("location")
-
-                val lat = locationSnap.child("lat").getValue(Double::class.java) ?: continue
-                val lng = locationSnap.child("lng").getValue(Double::class.java) ?: continue
-
-                val distance = distanceInMeters(myLat, myLng, lat, lng)
-
-                if (distance <= MAX_DISTANCE_METERS) {
-                    users.add(
-                        UserNearby(
-                            uid = uid,
-                            username = username,
-                            lat = lat,
-                            lng = lng,
-                            distance = distance
-                        )
-                    )
-                }
-            }
-
-            users.sortBy { it.distance }
-
-            findViewById<RecyclerView>(R.id.recyclerNearbyUsers)
-                .adapter?.notifyDataSetChanged()
-        }
-    }
-
-    // =========================
-    // CHAT
-    // =========================
-
-    private fun openChat(user: UserNearby) {
-        val currentUid = auth.currentUser?.uid ?: return
-        val chatId = listOf(currentUid, user.uid).sorted().joinToString("_")
-
-        val intent = Intent(this, ChatActivity::class.java).apply {
-            putExtra("chatId", chatId)
-            putExtra("otherUid", user.uid)
-            putExtra("username", user.username)
-        }
-
-        startActivity(intent)
-    }
-
-    // =========================
-    // DISTANCIA
-    // =========================
-
-    private fun distanceInMeters(
+    private fun distanceKm(
         lat1: Double, lon1: Double,
         lat2: Double, lon2: Double
     ): Double {
-        val r = 6371000.0
+        val r = 6371.0
         val dLat = Math.toRadians(lat2 - lat1)
         val dLon = Math.toRadians(lon2 - lon1)
 
-        val a = sin(dLat / 2).pow(2.0) +
-                cos(Math.toRadians(lat1)) *
-                cos(Math.toRadians(lat2)) *
-                sin(dLon / 2).pow(2.0)
+        val a = Math.sin(dLat / 2).pow(2.0) +
+                Math.cos(Math.toRadians(lat1)) *
+                Math.cos(Math.toRadians(lat2)) *
+                Math.sin(dLon / 2).pow(2.0)
 
-        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
         return r * c
+    }
+
+    private fun loadNearbyUsers() {
+        val myUid = FirebaseAuth.getInstance().uid ?: return
+        val usersRef = FirebaseDatabase.getInstance().reference.child("users")
+
+        lifecycleScope.launch {
+            val myWishlist = getMyWishlist()
+
+            usersRef.get().addOnSuccessListener { snapshot ->
+                val results = mutableListOf<UserNearby>()
+
+                val myLat = snapshot.child(myUid).child("lat").getValue(Double::class.java) ?: return@addOnSuccessListener
+                val myLng = snapshot.child(myUid).child("lng").getValue(Double::class.java) ?: return@addOnSuccessListener
+
+                for (userSnap in snapshot.children) {
+                    val uid = userSnap.key ?: continue
+                    if (uid == myUid) continue
+
+                    val lat = userSnap.child("lat").getValue(Double::class.java) ?: continue
+                    val lng = userSnap.child("lng").getValue(Double::class.java) ?: continue
+
+                    val distance = distanceKm(myLat, myLng, lat, lng)
+
+                    val matchedBooks = userSnap.child("books").children
+                        .filter {
+                            it.child("forTrade").getValue(Boolean::class.java) == true &&
+                                    myWishlist.contains(it.child("title").getValue(String::class.java))
+                        }
+                        .mapNotNull { it.child("title").getValue(String::class.java) }
+
+                    if (matchedBooks.isNotEmpty()) {
+                        results.add(
+                            UserNearby(
+                                uid = uid,
+                                username = userSnap.child("username").getValue(String::class.java) ?: "Usuario",
+                                distanceKm = distance,
+                                matchedBooks = matchedBooks
+                            )
+                        )
+                    }
+                }
+
+                val ordered = results.sortedWith(
+                    compareBy<UserNearby> { it.distanceKm }
+                        .thenByDescending { it.matchedBooks.size }
+                )
+
+                adapter.update(ordered)
+            }
+        }
     }
 }

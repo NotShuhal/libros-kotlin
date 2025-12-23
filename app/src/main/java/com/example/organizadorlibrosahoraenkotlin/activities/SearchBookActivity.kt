@@ -56,7 +56,9 @@ class SearchBookActivity : AppCompatActivity() {
             applicationContext,
             BookDatabase::class.java,
             "books-db"
-        ).build()
+        )
+            .fallbackToDestructiveMigration()
+            .build()
 
         btnSearch.setOnClickListener {
             val query = etSearch.text.toString().trim()

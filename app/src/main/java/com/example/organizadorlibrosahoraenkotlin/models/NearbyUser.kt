@@ -1,9 +1,8 @@
 package com.example.organizadorlibrosahoraenkotlin.models
 
 data class UserNearby(
-    val uid: String = "",
-    val username: String = "",
-    val lat: Double = 0.0,
-    val lng: Double = 0.0,
-    val distance: Double = 0.0
+    val uid: String,
+    val username: String,
+    val distanceKm: Double,
+    val matchedBooks: List<String>
 )

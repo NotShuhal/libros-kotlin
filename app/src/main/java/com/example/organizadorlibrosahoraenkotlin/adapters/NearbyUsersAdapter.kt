@@ -9,25 +9,39 @@ import com.example.organizadorlibrosahoraenkotlin.R
 import com.example.organizadorlibrosahoraenkotlin.models.UserNearby
 
 class NearbyUsersAdapter(
-    private val users: List<UserNearby>,
-    private val onClick: (UserNearby) -> Unit
+    private var users: List<UserNearby>
 ) : RecyclerView.Adapter<NearbyUsersAdapter.ViewHolder>() {
 
-    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val tvName: TextView = view.findViewById(R.id.tvUsername)
+    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val username: TextView = itemView.findViewById(R.id.tvUsername)
+        val matches: TextView = itemView.findViewById(R.id.tvMatches)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+    override fun onCreateViewHolder(
+        parent: ViewGroup,
+        viewType: Int
+    ): ViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_nearby_user, parent, false)
         return ViewHolder(view)
     }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+    override fun onBindViewHolder(
+        holder: ViewHolder,
+        position: Int
+    ) {
         val user = users[position]
-        holder.tvName.text = user.username
-        holder.itemView.setOnClickListener { onClick(user) }
+
+        holder.username.text = user.username
+        holder.matches.text =
+            "Coincide con ${user.matchedBooks.size} libros:\n" +
+                    user.matchedBooks.joinToString(", ")
     }
 
-    override fun getItemCount() = users.size
+    override fun getItemCount(): Int = users.size
+
+    fun update(newUsers: List<UserNearby>) {
+        users = newUsers
+        notifyDataSetChanged()
+    }
 }

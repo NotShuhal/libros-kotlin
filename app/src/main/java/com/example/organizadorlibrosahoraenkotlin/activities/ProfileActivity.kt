@@ -122,7 +122,9 @@ class ProfileActivity : AppCompatActivity() {
             applicationContext,
             BookDatabase::class.java,
             "books-db"
-        ).build()
+        )
+            .fallbackToDestructiveMigration()
+            .build()
 
         val user = SharedPrefManager.getUser(this)
         etName.setText(user?.username ?: "Usuario")
